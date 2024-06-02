@@ -1,3 +1,5 @@
 # MEJ Bachelor Project Code
 
-Extention objects can be found [here](app/Source/ExtensionObjects)
+[Extention Objects](app/Source/ExtensionObjects) - These are the standard tables I have either added fields to or modifyed existing fields.
+
+[Functional Objects](app/Source/FunctionalObjects) - These are the files created by me.
