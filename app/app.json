@@ -1,0 +1,52 @@
+{
+  "id": "dd8e38e2-339e-48d1-82a8-5df654d96588",
+  "name": "MEJ Bachelor Project",
+  "publisher": "Elbek & Vejrup A/S",
+  "version": "1.0.10.0",
+  "brief": "MEJ Bachelor Project",
+  "description": "MEJ Bachelor Project",
+  "privacyStatement": "https://elbek-vejrup.dk/appsource-privacy-policy/",
+  "EULA": "https://elbek-vejrup.dk/appsource-license-terms-and-conditions/",
+  "help": "https://elbek-vejrup.dk/dynamics-365/generel/business-central-support/",
+  "url": "https://elbek-vejrup.dk/",
+  "contextSensitiveHelpUrl": "https://elbek-vejrup.dk/dynamics-365/generel/business-central-support/",
+  "logo": "./Images/EV_Logo.png",
+  "application": "23.0.0.0",
+  "platform": "23.0.0.0",
+  "screenshots": [],
+  "dependencies": [
+    {
+      "id": "131f85d1-48f2-481c-8d5a-849b16e388e6",
+      "name": "Progressus PSA (EU)",
+      "publisher": "Plumbline Consulting LLC",
+      "version": "11.4.0.0"
+  },
+  {
+      "id": "760fc3a0-ddab-43aa-93a5-6430f34f1b76",
+      "name": "Progressus Software",
+      "publisher": "Plumbline Consulting LLC",
+      "version": "11.4.0.27"
+  },
+  {
+      "id": "44166111-d444-4640-bf35-fee7792f3cb7",
+      "name": "Advanced Project Feature Pack",
+      "publisher": "Plumbline Consulting LLC",
+      "version": "11.4.0.27"
+  }
+  ],
+  "idRanges": [
+    {
+      "from": 60000,
+      "to": 69999
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": false,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "12.0",
+  "features": ["TranslationFile"],
+  "target": "Cloud",
+  "applicationInsightsConnectionString": ""
+}

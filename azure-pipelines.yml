@@ -1,0 +1,342 @@
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Version: 1.24
+#
+# Documentation of all available build steps can be found here: https://github.com/HodorNV/ALOps/blob/master/Documentation/BuildSteps.md and multiple examples is available here: https://github.com/HodorNV/ALOps/tree/master/Examples
+#
+# Variables to change:
+#
+# CodeAnalyzers
+#  A string of Analyzers, full set is: 'CodeCop,UICop,AppSourceCop,PerTenantExtensionCop'
+#  Note: The Compile steps is set to fail on Compiler warnings!
+#
+#
+# Docker Image to build on and which License to use:
+#  This is specified Azure DevOps Pipeline Variables and not in Code!
+#
+# DevOps Variables:
+#  Variable Name                OnPrem Example Value    Online Example Value    Notes
+#  BC_CompilerSettingsName      Standard                Standard                Compiler Settings Name for Main App
+#  BC_TestCompilerSettingsName  Standard                Standard                Compiler Settings Name for Test App
+#  BC_EnvironmentType           OnPrem                  sandbox
+#  BC_Version                   16.4                    16.4                    16.0 = BC 16 RTM. Leave empty to get latest released version. (For NextMinor specify major version no. i.e 16)
+#
+# Other Deveops Variables 
+#  Variable Name                OnPrem Example Value    Online Example Value     Notes
+#  BC_Localization              dk                      dk                       Only add if different then w1.
+#  BC_ArtifactVersion           NextMajor               NextMajor                Only add if you want to build against NextMinor or NextMajor. Value can be either NextMinor or NextMajor
+#  BC_SaaSToken                 $(BCSaasToken)          $(BCSaasToken)           Only add if BC_ArtifactVersion is specified - set value to $(BCSaasToken)
+#  BC_License                   $(BCLicense16)          $(BCLicense16)           Per default do not set this variable as the system will auto select the correct license matching the BC major version. Only specify if a license for another version should be used.
+#  BC_InstallPrevApp            1                       1                        Only add if different than the default value, which can be set below.
+#  BC_CodeAnalyzers             CodeCop,UICop,PerTenantExtensionCop,AppSourceCop Only add if different than the default value, which can be set below.
+#  BC_AllowAppWarnings          1                       1                        Set to 1 if compile warnings should be allowed. Otherwize skip. (If warnings are always allowed change default value of FailAppOnWarnings below)
+#  BC_PublishDependencies       1                       1                        Only add if different than the default value, which can be set below.
+#  BC_SignApp                   1                       1                        Only add if different than the default value, which can be set below.  
+#  BC_AppFolder                 BC15.0/app              BC15.0/app               Only add if different than the default value, which can be set below.
+#  BC_TestAppFolder             BC15.0/test             BC15.0/test              Only add if different than the default value, which can be set below.
+#  BC_TestSuite                 EV-TEST                 EV-TEST                  Only add if different than the default value, which can be set below.
+#  BC_RunTests                  1                       1                        Only add if different than the default value, which can be set below.
+#  BC_PreserveVersionNo         0/1                     0/1                      Default = 0
+#  BC_PrintAllVariables         0/1                     0/1
+#  BC_RunPipelines                                                               Comma separated list with names of other pipelines this pipeline should run. Pipelines will run on the same branch as the calling pipeline. Build Service must have Queue Builds permission on the specified pipelines.                                          
+#  BC_RuntimePackage            0/1                     0/1                      Control if runtime packages should also be created. Default value = 0 (no)
+#
+#  ...see full documentation on specific version, next minor version, latest version and next major version on: https://github.com/HodorNV/ALOps/tree/master/Examples/ArtifactVersions
+#
+#
+#  For Custom execution of Unit Test:
+#   - Set BC_TestAppFolder
+#   - Create an install codeunit in your test app folder which installs a new Test Suite that can run your Unit Test.
+#   - Set the default TestSuite variable with the name of your Test Suite from the Install codeunit, see example here: https://github.com/HodorNV/ALOps/issues/37#issuecomment-543622888
+#   - Note: for BC13 and BC14: Add additional step for fob import and change Test Suite handling
+#
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Document your pipeline changes here:
+# 
+# Changed default values:
+# - 
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+name: $(Build.BuildId)
+
+variables:
+- group: AzureKeyVault
+
+# Variables with a default value which can be overruled by a DevOps variable.
+- name: 'InstallPrevApp'
+  value: '1'
+- name: 'CodeAnalyzers'
+  value: 'CodeCop,UICop,AppSourceCop,PerTenantExtensionCop'
+- name: 'FailAppOnWarnings'
+  value: "true"
+- name: 'PublishDependencies'
+  value: '0'
+- name: 'SignApp'
+  value: '1'
+- name: AppFolder
+  value: 'app'
+- name: TestAppFolder
+  value: 'test'
+- name: 'TestSuite'
+  value: ''
+- name: 'RunTests'
+  value: '0'
+- name: 'PreserveVersionNo'
+  value: '0'
+- name: 'PrintAllVariables'
+  value: '0'
+- name: 'CompilerSettingsName'
+  value: 'Standard'
+- name: 'TestCompilerSettingsName'
+  value: 'Standard'
+- name: 'RuntimePackage'
+  value: '0'  
+
+# Variables set from DevOps Pipeline without a default value.
+- name: 'EnvironmentType'
+- name: 'Version'
+- name: 'Localization'
+- name: 'ArtifactVersion'
+- name: 'License'
+
+# Folder and Path Variables.
+- name: 'AppJsonPath'
+- name: 'DependenciesFolder'
+- name: 'PrevAppVersionFolder'
+- name: 'XliffGenFolder'
+- name: 'TestAppJsonPath'
+- name: 'EVCompilerSettingsPath'
+
+# Build Completion
+- name: 'RunPipelines'
+
+# Misc Variables.
+- name: 'CompilerArgumentForVersionNo'
+
+pool:
+  name: EV_OnPremise
+
+resources:
+  repositories:
+    - repository: 'yamltemplates'
+      type: 'git'
+      name: 'Templates/Templates'
+      ref:  'refs/heads/master'
+
+steps:
+- checkout: self
+  clean: "true"
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Set Yaml Variables From DevOps Variables
+- template: 'Variables/SetYamlVariablesFromDevOpsVariables.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Update Yaml Variables From EVCompilerSettings.json
+- template: 'Variables/UpdateVariables.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Hotfix for Breaking Schema Changes
+- template: 'Hotfix/HotfixforBreakingSchemaChanges.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Get Dependencies
+- template: 'OnPrem-Builds/InstallDependencies.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Build Container
+- template: 'Container/BuildContainer.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Select License based on major BC version
+- template: 'Variables/SetLicenseVariableAccordingToContainerVersion.yml@yamltemplates'
+
+- task: ALOpsLicenseImport@1
+  displayName: 'EV: Import Auto Selected License'
+  condition: and(succeeded(), ne(variables['License'], ''))
+  inputs:
+    usedocker: true
+    license_path: $(License)
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Print Yaml Variable Values
+- template: 'Variables/PrintYamlVariableValues.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 
+- task: ALOpsDockerExec@1
+  displayName: 'EV: Show Businees Central License Information'
+  inputs:
+    inline_script: |
+      Get-NavServerInstance | Export-NavServerLicenseInformation
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppPublish@1
+  displayName: 'ALOps Install AL TestTool'
+  condition: and(succeeded(), eq(variables['RunTests'], '1'))
+  inputs:
+    usedocker: true
+    installaltesttool: true
+    skip_verification: true
+    install_al_app_names: |
+     Tests-TestLibraries
+     System Application Test
+     System Application Test Library
+     Any
+     Library Assert
+     Test Runner
+     Permissions Mock
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppPublish@1
+  displayName: 'EV: Install Previous App Version'
+  condition: and(succeeded(), eq(variables['InstallPrevApp'], '1'))
+  inputs:
+    usedocker: true
+    nav_artifact_app_filter: '*.app'
+    batch_publish_folder: $(PrevAppVersionFolder)
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppPublish@1
+  displayName: 'EV: Install ISV and dependencies apps'
+  inputs:
+    usedocker: true
+    nav_artifact_app_filter: '*.app'
+    batch_publish_folder: $(DependenciesFolder)
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppCompiler@1
+  displayName: 'ALOps Compile App'
+  inputs:
+    usedocker: true
+    targetproject: $(AppJsonPath)
+    nav_app_version: $(CompilerArgumentForVersionNo)
+    al_analyzer: $(CodeAnalyzers)
+    app_file_suffix: '_APP'
+    failed_on_warnings: $(FailAppOnWarnings)    
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppPublish@1
+  displayName: 'ALOps Publish AL-App'
+  inputs:
+    usedocker: true
+    nav_artifact_app_filter: '*_APP.app'   
+    skip_verification: true 
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Generate Xliff files
+- template: 'Xliff/Xliff.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppCompiler@1
+  displayName: 'ALOps Compile Test App'
+  condition: and(succeeded(), eq(variables['RunTests'], '1'))
+  inputs:
+    usedocker: true
+    targetproject: $(TestAppJsonPath)
+    nav_app_version: '?.?.?.?'
+    app_file_suffix: '_TEST'
+    failed_on_warnings: true    
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppPublish@1
+  displayName: 'ALOps Publish AL-TEST App'
+  condition: and(succeeded(), eq(variables['RunTests'], '1'))
+  inputs:
+    usedocker: true
+    nav_artifact_app_filter: '*_TEST.app'
+    skip_verification: true 
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppTest@1
+  displayName: 'EV: Run Custom Tests'
+  condition: and(succeeded(), eq(variables['RunTests'], '1'))
+  inputs:
+    usedocker: true
+    import_action: "Skip"
+    import_testtoolkit: false
+    testpage: '130455'
+    testsuite: $(TestSuite) 
+    failed_test_action: 'Error'
+  continueOnError: false   
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: PublishTestResults@2
+  displayName: 'ALOps Publish Test Results **/TestResults.xml'
+  condition: eq(variables['RunTests'], '1')
+  inputs:
+    testResultsFormat: XUnit
+    testResultsFiles: '**/TestResults.xml'
+    testRunTitle: 'BC Test Results: $(Build.BuildId)'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppCompiler@1
+  displayName: 'ALOps Re-Compile App with xliff'
+  inputs:
+    usedocker: true
+    targetproject: $(AppJsonPath)
+    nav_app_version: $(CompilerArgumentForVersionNo)
+    app_file_suffix: '_APP'
+    failed_on_warnings: $(FailAppOnWarnings)    
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Sign Apps
+- template: 'Signing/SignApps.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsAppRuntimePackage@1
+  displayName: 'ALOps Create Runtime Package'
+  condition: and(succeeded(), eq(variables['RuntimePackage'], '1'))
+  inputs:
+    usedocker: true
+    app_file_suffix: '*_APP'
+    targetproject: $(AppJsonPath)
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish App Dependencies'
+  condition: and(succeeded(), eq(variables['PublishDependencies'], '1'))
+  inputs:
+    PathtoPublish: $(DependenciesFolder)
+    ArtifactName: 'Dependencies'
+    publishLocation: 'Container'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+- task: ALOpsDockerRemove@1
+  displayName: 'ALOps Remove Docker Container'
+  enabled: "true"
+  condition: always()
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# EV: Run Pipeline(s)
+- template: 'BuildCompletion/RunPipelines.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# ALOps: Clean up Build Server 
+- template: 'CleanUp/CleanUpBuildServer.yml@yamltemplates'
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

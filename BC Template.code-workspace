@@ -1,0 +1,35 @@
+//#TODO: Rename this file to: <ShortProjectName>.code-workspace - e.g. FSH.code-workspace
+{
+	"folders": [
+		{
+			"path": "app",
+			"name": "App"
+		},
+		{
+			"path": "test",
+			"name": "Test"
+		},
+		{
+			"path": "debug",
+			"name": "Debug"
+		},
+		{
+			"path": ".",
+			"name": "Project"
+		}
+	],
+    "settings": {
+        "git.enableSmartCommit": false,
+        "git.suggestSmartCommit": false,
+        "ev-tools.storeContainerSettings": false,
+        "ev-tools.containerSettings": {
+            "name": "<Customer/App Name>", //TODO: Change default name of Container
+            "type": "OnPrem",  //TODO: Change Container Type
+            "version": "19.1",  //TODO: Change Container Version
+            "country": "dk", //TODO: Change Container Country if needed
+            "licensefile": "Y:\\Tools, media and licenses\\Licenses\\Udvikler\\Udvikler BC Dynamic 365_V19 inkl. ISV_*.flf", //TODO: Update path for License File
+            "ismultitenant": true, //TODO: Update Multitenant property if needed
+            "updateDependencies": false
+        }
+	}
+}

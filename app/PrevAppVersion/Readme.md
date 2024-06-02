@@ -1,0 +1,1 @@
+Place latest released version of the app in this folder to let DevOps do breaking change testing.

@@ -1,0 +1,1 @@
+Only place apps in this folder which we do NOT have a dependency on in app.json

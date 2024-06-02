@@ -1,0 +1,31 @@
+//#TODO: Rename this file app.json and update the application property to match your Project
+{
+  "id": "a3440d38-8c61-4beb-833d-046db48a8366",
+  "name": "EV Debug", 
+  "publisher": "Elbek & Vejrup A/S",
+  "brief": "",
+  "description": "",
+  "version": "1.0.0.0", 
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "application": "19.0.0.0", //#TODO: Specify application, e.g. 19.1.0.0 for BC 19 CU1
+  "platform": "19.0.0.0", //#TODO: Change platform
+  "dependencies": [    
+      { //#TODO: Add dependency for app(s) to debug
+      "id": "<Change Me>",
+      "name": "<Change Me>",
+      "publisher": "Elbek & Vejrup A/S",
+      "version": "<Change Me>"
+    }
+  ],
+  "screenshots": [],
+  "runtime": "8.0", 
+  "target": "Cloud", //#TODO
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": false,
+    "includeSourceInSymbolFile": true
+  }
+}

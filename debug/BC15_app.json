@@ -1,0 +1,38 @@
+//#TODO: Rename this file app.json and update platform, runtime and target to match your Project
+{
+  "id": "a3440d38-8c61-4beb-833d-046db48a8366",
+  "name": "EV Debug", 
+  "publisher": "Elbek & Vejrup A/S",
+  "brief": "",
+  "description": "",
+  "version": "1.0.0.0", 
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "dependencies": [    
+    { 
+      "appId": "63ca2fa4-4f03-4f2b-a480-172fef340d3f",
+      "name": "System Application",
+      "publisher": "Microsoft",
+      "version": "15.0.36560.0"
+    },
+    { 
+      "appId": "437dbf0e-84ff-417a-965d-ed2bb9650972",
+      "name": "Base Application",
+      "publisher": "Microsoft",
+      "version": "15.0.36560.0"
+    },
+    { //#TODO: Add dependency for app(s) to debug
+      "appId": "<Change Me>",
+      "name": "<Change Me>",
+      "publisher": "Elbek & Vejrup A/S",
+      "version": "<Change Me>"
+    }
+  ],
+  "screenshots": [],
+  "platform": "15.0.0.0", 
+  "runtime": "4.0", 
+  "target": "OnPrem", //#TODO
+  "showMyCode": true 
+}

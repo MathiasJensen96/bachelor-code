@@ -1,0 +1,1 @@
+Place latest released version of apps (base, system, dependencies and "product/customization") in this folder to let VS Code detect breaking changes.
